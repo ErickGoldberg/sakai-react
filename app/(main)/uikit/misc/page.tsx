@@ -64,9 +64,6 @@ const MiscDemo = () => {
                         <i className="pi pi-bell mr-4 p-text-secondary p-overlay-badge" style={{ fontSize: '2rem' }}>
                             <Badge value="2"></Badge>
                         </i>
-                        <i className="pi pi-calendar mr-4 p-text-secondary p-overlay-badge" style={{ fontSize: '2rem' }}>
-                            <Badge value="10+" severity="danger"></Badge>
-                        </i>
                         <i className="pi pi-envelope p-text-secondary p-overlay-badge" style={{ fontSize: '2rem' }}>
                             <Badge severity="danger"></Badge>
                         </i>
