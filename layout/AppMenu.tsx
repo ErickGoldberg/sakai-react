@@ -15,7 +15,8 @@ const AppMenu = () => {
             label: 'Componentes (mudar esse nome)',
             items: [
                 { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/' },
-                { label: 'Crud', icon: 'pi pi-fw pi-pencil', to: '/pages/crud' }
+                { label: 'Pet', icon: 'pi pi-fw pi-pencil', to: '/pages/crud' },
+                { label: 'Tutor', icon: 'pi pi-fw pi-pencil', to: '/pages/crudTutor' }
             ]
         },
         {
