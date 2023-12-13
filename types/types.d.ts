@@ -60,3 +60,18 @@ export type {
     AppMailProps,
     AppMenuItem
 };
+
+export interface EventData {
+    id: string;
+    name: string;
+    date: string; 
+}
+
+export interface DemoEvent {
+    id: string;
+    name: string;
+    descricao: string;
+    preco: number;
+    duracao: number;
+    date: string; 
+}

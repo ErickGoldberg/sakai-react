@@ -12,14 +12,17 @@ const AppMenu = () => {
 
     const model: AppMenuItem[] = [
         {
-            label: 'Componentes (mudar esse nome)',
+            label: 'Recife Pet',
             items: [
                 { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/' },
-                { label: 'Pet', icon: 'pi pi-fw pi-pencil', to: '/pages/crud' },
-                { label: 'Tutor', icon: 'pi pi-fw pi-pencil', to: '/pages/crudTutor' }
+                { label: 'Pet', icon: 'pi pi-fw pi-pencil', to: '/pages/crudPets' },
+                { label: 'Tutor', icon: 'pi pi-fw pi-pencil', to: '/pages/crudTutor' },
+                { label: 'Serviço', icon: 'pi pi-fw pi-pencil', to: '/pages/crudServico' },
+               
+
             ]
         },
-        {
+        /*{
             label: 'Utils',
             items: [
                 { label: 'Format Layout', icon: 'pi pi-fw pi-id-card', to: '/uikit/formlayout' },
@@ -45,7 +48,7 @@ const AppMenu = () => {
                 { label: 'Empty', icon: 'pi pi-fw pi-circle-off', to: '/pages/empty' },
                 { label: 'Error', icon: 'pi pi-fw pi-times-circle', to: '/auth/error' }
               ]
-        }
+        } */
     ];
 
     return (
