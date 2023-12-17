@@ -12,13 +12,11 @@ import { Toolbar } from 'primereact/toolbar';
 import { classNames } from 'primereact/utils';
 import React, { useEffect, useRef, useState } from 'react';
 import { EventService } from '../../../../demo/service/EventService';
-import { Demo} from '../../../../types/types';
+import { Demo } from '../../../../types/types';
 import { Menu } from 'primereact/menu';
 
-
-
 const CrudServico = ({}) => {
-    let servicoVazio: Demo.Event = { 
+    let servicoVazio: Demo.Event = {
         id: '',
         name: '',
         descricao: '',
@@ -38,7 +36,7 @@ const CrudServico = ({}) => {
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
     type ServicoKey = keyof Demo.Event;
-  
+
     useEffect(() => {
         EventService.getEvents().then((data) => setServicos(data as any));
     }, []);
@@ -52,20 +50,20 @@ const CrudServico = ({}) => {
         setSubmitted(false);
         setServicoDialog(false);
     };
-    
+
     const hideDeleteServicosDialog = () => {
         setDeleteServicosDialog(false);
     };
-    
+
     const saveServico = () => {
         setSubmitted(true);
-    
+
         if (servico.name?.trim()) {
             let _servicos = [...(servicos as unknown as Demo.Event[])];
             let _servico = { ...servico };
             if (servico.id) {
                 const index = findIndexById(servico.id);
-    
+
                 _servicos[index] = _servico;
                 toast.current?.show({
                     severity: 'success',
@@ -83,23 +81,23 @@ const CrudServico = ({}) => {
                     life: 3000
                 });
             }
-    
+
             setServicos(_servicos);
             setServicoDialog(false);
             setServico(servicoVazio);
         }
     };
-    
+
     const editServico = (servico: Demo.Event) => {
         setServico({ ...servico });
         setServicoDialog(true);
     };
-    
+
     const confirmDeleteServico = (servico: Demo.Event) => {
         setServico(servico);
         setDeleteServicoDialog(true);
     };
-    
+
     const deleteServico = () => {
         let _servicos = (servicos as unknown as Demo.Event[])?.filter((val: Demo.Event) => val.id !== servico.id);
         setServicos(_servicos);
@@ -121,7 +119,7 @@ const CrudServico = ({}) => {
                 break;
             }
         }
-    
+
         return index;
     };
 
@@ -133,11 +131,11 @@ const CrudServico = ({}) => {
         }
         return id;
     };
-    
+
     const confirmDeleteSelected = () => {
         setDeleteServicosDialog(true);
     };
-    
+
     const deleteSelectedServicos = () => {
         let _servicos = (servicos as unknown as Demo.Event[])?.filter((val: Demo.Event) => !(selectedServicos as Demo.Event[])?.includes(val));
         setServicos(_servicos);
@@ -148,22 +146,22 @@ const CrudServico = ({}) => {
             summary: 'Sucesso',
             detail: 'Serviços Excluídos',
             life: 3000
-    });
+        });
     };
-    
+
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: keyof Demo.Event) => {
-        const val = e.target.value || ''; 
-        setServico(prevServico => ({
+        const val = e.target.value || '';
+        setServico((prevServico) => ({
             ...prevServico,
             [name]: val
         }));
     };
-    
+
     const onInputNumberChange = (e: InputNumberChangeEvent, name: 'preco' | 'duracao') => {
         const val = e.value || 0;
         let _servico = { ...servico };
         _servico[name] = val;
-    
+
         setServico(_servico);
     };
     const rightToolbarTemplate = () => {
@@ -176,7 +174,7 @@ const CrudServico = ({}) => {
             </React.Fragment>
         );
     };
-    
+
     const idBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -185,7 +183,7 @@ const CrudServico = ({}) => {
             </>
         );
     };
-    
+
     const nameBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -194,7 +192,7 @@ const CrudServico = ({}) => {
             </>
         );
     };
-    
+
     const descricaoBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -203,7 +201,7 @@ const CrudServico = ({}) => {
             </>
         );
     };
-    
+
     const precoBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -212,7 +210,7 @@ const CrudServico = ({}) => {
             </>
         );
     };
-    
+
     const duracaoBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -221,7 +219,7 @@ const CrudServico = ({}) => {
             </>
         );
     };
-    
+
     const actionBodyTemplate = (rowData: Demo.Event) => {
         return (
             <>
@@ -232,11 +230,11 @@ const CrudServico = ({}) => {
     };
     const countServices = (servicos: Demo.Event[] | null): Record<string, number> => {
         const serviceCount: Record<string, number> = {};
-    
+
         if (servicos) {
             servicos.forEach((servico) => {
                 const serviceName = servico.name;
-    
+
                 if (!serviceCount[serviceName]) {
                     serviceCount[serviceName] = 1;
                 } else {
@@ -244,7 +242,7 @@ const CrudServico = ({}) => {
                 }
             });
         }
-    
+
         return serviceCount;
     };
     const servicoCount = countServices(servicos);
@@ -258,14 +256,14 @@ const CrudServico = ({}) => {
             </span>
         </div>
     );
-    
+
     const servicoDialogFooter = (
         <>
             <Button label="Cancelar" icon="pi pi-times" text onClick={hideDialog} />
             <Button label="Salvar" icon="pi pi-check" text onClick={saveServico} />
         </>
     );
-    
+
     const deleteServicoDialogFooter = (
         <>
             <Button label="Não" icon="pi pi-times" text onClick={hideDeleteServicosDialog} />
@@ -275,21 +273,21 @@ const CrudServico = ({}) => {
 
     const deleteServicosDialogFooter = (
         <>
-        <Button label="Não" icon="pi pi-times" text onClick={hideDeleteServicosDialog} />
-        <Button label="Sim" icon="pi pi-check" text onClick={deleteSelectedServicos} />
-    </>
-    )
-    
+            <Button label="Não" icon="pi pi-times" text onClick={hideDeleteServicosDialog} />
+            <Button label="Sim" icon="pi pi-check" text onClick={deleteSelectedServicos} />
+        </>
+    );
+
     return (
         <div className="grid crud-demo">
             <div className="col-12">
                 <div className="card">
                     <Toast ref={toast} />
                     <Toolbar className="mb-4" right={rightToolbarTemplate}></Toolbar>
-    
+
                     <DataTable
                         ref={dt}
-                        value={servicos} 
+                        value={servicos}
                         selection={selectedServicos}
                         onSelectionChange={(e) => setSelectedServicos(e?.value as any)}
                         dataKey="id"
@@ -298,9 +296,9 @@ const CrudServico = ({}) => {
                         rowsPerPageOptions={[5, 10, 25]}
                         className="datatable-responsive"
                         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} tutors" 
+                        currentPageReportTemplate="Exibindo {first} até {last} de {totalRecords} tutores"
                         globalFilter={globalFilter}
-                        emptyMessage="Nenhum serviço encontrado." 
+                        emptyMessage="Nenhum serviço encontrado."
                         header={header}
                         responsiveLayout="scroll"
                     >
@@ -312,35 +310,34 @@ const CrudServico = ({}) => {
                         <Column field="duracao" header="Duração" body={duracaoBodyTemplate} headerStyle={{ minWidth: '7rem' }}></Column>
                         <Column body={actionBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
                     </DataTable>
-    
+
                     <Dialog visible={servicoDialog} style={{ width: '450px' }} header="Cadastrar Serviço" modal className="p-fluid" footer={servicoDialogFooter} onHide={hideDialog}>
-    
-                    <div className="field">
-                        <label htmlFor="name">Nome do Serviço</label>
-                        <InputText
-                            id="name"
-                            value={servico.name}
-                            onChange={(e) => onInputChange(e, 'name')}
-                            required
-                            autoFocus
-                            className={classNames({
-                                'p-invalid': submitted && !servico.name
-                            })}
-                        />
-                        {submitted && !servico.name && <small className="p-invalid">Nome é obrigatório.</small>}
-                    </div>
-                    <div className="field">
-                        <label htmlFor="descricao">Descrição</label>
-                        <InputTextarea id="descricao" value={servico.descricao} onChange={(e) => onInputChange(e, 'descricao')} required />
+                        <div className="field">
+                            <label htmlFor="name">Nome do Serviço</label>
+                            <InputText
+                                id="name"
+                                value={servico.name}
+                                onChange={(e) => onInputChange(e, 'name')}
+                                required
+                                autoFocus
+                                className={classNames({
+                                    'p-invalid': submitted && !servico.name
+                                })}
+                            />
+                            {submitted && !servico.name && <small className="p-invalid">Nome é obrigatório.</small>}
                         </div>
-                    <div className="field">
-                        <label htmlFor="preco">Preço</label>
-                        <InputNumber id="preco" value={servico.preco} onChange={(e) => onInputNumberChange(e, 'preco')} required />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="duracao">Duração</label>
-                        <InputNumber id="duracao" value={servico.duracao} onChange={(e) => onInputNumberChange(e, 'duracao')} required />
-                    </div>
+                        <div className="field">
+                            <label htmlFor="descricao">Descrição</label>
+                            <InputTextarea id="descricao" value={servico.descricao} onChange={(e) => onInputChange(e, 'descricao')} required />
+                        </div>
+                        <div className="field">
+                            <label htmlFor="preco">Preço</label>
+                            <InputNumber id="preco" value={servico.preco} onChange={(e) => onInputNumberChange(e, 'preco')} required />
+                        </div>
+                        <div className="field">
+                            <label htmlFor="duracao">Duração</label>
+                            <InputNumber id="duracao" value={servico.duracao} onChange={(e) => onInputNumberChange(e, 'duracao')} required />
+                        </div>
                     </Dialog>
 
                     <Dialog visible={deleteServicoDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteServicoDialogFooter} onHide={hideDialog}>
@@ -359,12 +356,10 @@ const CrudServico = ({}) => {
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {servico && <span>Tem certeza que deseja excluir esse serviço?</span>}
                         </div>
-                    </Dialog>                   
-                     </div>
-                    </div>
-                    </div>
-                    );
+                    </Dialog>
+                </div>
+            </div>
+        </div>
+    );
 };
 export default CrudServico;
-
-

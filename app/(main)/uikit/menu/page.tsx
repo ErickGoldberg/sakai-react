@@ -280,10 +280,6 @@ const MenuDemo = ({ children }: any) => {
         },
         {
             separator: true
-        },
-        {
-            label: 'Options',
-            icon: 'pi pi-cog'
         }
     ];
 
