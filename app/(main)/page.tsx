@@ -22,7 +22,6 @@ import Link from 'next/link';
 import { LayoutContext } from '../../layout/context/layoutcontext';
 import { DemoEvent } from '../../types/types';
 
-
 const Dashboard = () => {
     const [products, setProducts] = useState<Demo.Product[]>([]);
     const [servicos, setServicos] = useState<null | Demo.Event[]>(null);
@@ -30,7 +29,7 @@ const Dashboard = () => {
     const menu1 = useRef<Menu>(null);
     const menu2 = useRef<Menu>(null);
     const [serviceLabels, setServiceLabels] = useState<string[]>([]);
-    
+
     const [lineOptions, setLineOptions] = useState<ChartOptions>();
     const { layoutConfig } = useContext(LayoutContext);
 
@@ -98,7 +97,6 @@ const Dashboard = () => {
         setLineOptions(lineOptions);
     };
 
-    
     useEffect(() => {
         ProductService.getProductsSmall().then((data) => setProducts(data));
     }, []);
@@ -111,33 +109,12 @@ const Dashboard = () => {
         }
     }, [layoutConfig.colorScheme]);
 
-    
-
     return (
         <div className="grid">
-            <div className="col-12 xl:col-6">
+            <div className="col-12">
                 <div className="card">
                     <h5>Pets Cadastrados Recentemente</h5>
                     <CrudPets />
-                </div>
-            </div>
-            <div className="col-12 xl:col-6">
-                <div
-                    className="px-4 py-5 shadow-2 flex flex-column md:flex-row md:align-items-center justify-content-between mb-3"
-                    style={{
-                        borderRadius: '1rem',
-                        background: 'linear-gradient(0deg, rgba(0, 123, 255, 0.5), rgba(0, 123, 255, 0.5)), linear-gradient(92.54deg, #1C80CF 47.88%, #FFFFFF 100.01%)'
-                    }}
-                >
-                    <div>
-                        <div className="text-blue-100 font-medium text-xl mt-2 mb-3">TAKE THE NEXT STEP</div>
-                        <div className="text-white font-medium text-5xl">Try PrimeBlocks</div>
-                    </div>
-                    <div className="mt-4 mr-auto md:mt-0 md:mr-0">
-                        <Link href="https://blocks.primereact.org" className="p-button font-bold px-5 py-3 p-button-warning p-button-rounded p-button-raised">
-                            Get Started
-                        </Link>
-                    </div>
                 </div>
             </div>
         </div>
