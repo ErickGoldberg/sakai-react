@@ -19,7 +19,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     }));
 
     return (
-        <div className="layout-topbar">
+        <div className="layout-topbar" style={{display: layoutState.showAppTopBar ? 'flex' : 'none'}}>
             <button ref={menubuttonRef} type="button" className="p-link layout-menu-button layout-topbar-button" onClick={onMenuToggle}>
                 <i className="pi pi-bars" />
             </button>
