@@ -1,142 +1,79 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
+import { useRouter } from 'next/navigation';
 import { Button } from 'primereact/button';
-import { Chart } from 'primereact/chart';
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import { Menu } from 'primereact/menu';
-import { Dialog } from 'primereact/dialog';
-import { InputNumber, InputNumberValueChangeEvent, InputNumberChangeEvent } from 'primereact/inputnumber';
+import { Checkbox } from 'primereact/checkbox';
 import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { Toast } from 'primereact/toast';
-import { Toolbar } from 'primereact/toolbar';
+import { Password } from 'primereact/password';
 import { classNames } from 'primereact/utils';
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { EventService } from '../../demo/service/EventService';
-import { Demo } from '../../types/demo';
-import { ChartData, ChartOptions } from 'chart.js';
-import CrudPets from './pages/crudPets/page';
-import { ProductService } from '../../demo/service/ProductService';
-import Link from 'next/link';
+import { useContext, useState } from 'react';
 import { LayoutContext } from '../../layout/context/layoutcontext';
-import { DemoEvent } from '../../types/types';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { app } from '../(main)/firebase';
 
+const Login = () => {
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [checked, setChecked] = useState(false);
+    const { layoutConfig, setLayoutState } = useContext(LayoutContext);
 
-const Dashboard = () => {
-    const [products, setProducts] = useState<Demo.Product[]>([]);
-    const [servicos, setServicos] = useState<null | Demo.Event[]>(null);
-    const servicesCount: number[] = [120, 80, 45, 30, 15];
-    const menu1 = useRef<Menu>(null);
-    const menu2 = useRef<Menu>(null);
-    const [serviceLabels, setServiceLabels] = useState<string[]>([]);
-    
-    const [lineOptions, setLineOptions] = useState<ChartOptions>();
-    const { layoutConfig } = useContext(LayoutContext);
+    const router = useRouter();
+    const containerClassName = classNames('surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden', { 'p-input-filled': layoutConfig.inputStyle === 'filled' });
+    const login = async () => {
+        try {
 
-    const applyLightTheme = () => {
-        const lineOptions: ChartOptions = {
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#495057'
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: '#495057'
-                    },
-                    grid: {
-                        color: '#ebedef'
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: '#495057'
-                    },
-                    grid: {
-                        color: '#ebedef'
-                    }
-                }
-            }
-        };
-
-        setLineOptions(lineOptions);
-    };
-
-    const applyDarkTheme = () => {
-        const lineOptions = {
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#ebedef'
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: '#ebedef'
-                    },
-                    grid: {
-                        color: 'rgba(160, 167, 181, .3)'
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: '#ebedef'
-                    },
-                    grid: {
-                        color: 'rgba(160, 167, 181, .3)'
-                    }
-                }
-            }
-        };
-
-        setLineOptions(lineOptions);
-    };
-
-    
-    useEffect(() => {
-        ProductService.getProductsSmall().then((data) => setProducts(data));
-    }, []);
-
-    useEffect(() => {
-        if (layoutConfig.colorScheme === 'light') {
-            applyLightTheme();
-        } else {
-            applyDarkTheme();
+            const auth = getAuth(app);
+            await signInWithEmailAndPassword(auth, email, password)
+            .then(() => {
+                setLayoutState((prevState) => {
+                    return {
+                        ...prevState,
+                        showAppTopBar: true,
+                        staticMenuDesktopInactive: false
+                    };
+                });
+                router.push('/pages/dashboard');
+            })
         }
-    }, [layoutConfig.colorScheme]);
-
-    
+        catch{
+            console.error("rip login :(")
+        }
+    };
 
     return (
-        <div className="grid">
-            <div className="col-12 xl:col-6">
-                <div className="card">
-                    <h5>Pets Cadastrados Recentemente</h5>
-                    <CrudPets />
-                </div>
-            </div>
-            <div className="col-12 xl:col-6">
+        <div className={containerClassName}>
+            <div className="flex flex-column align-items-center justify-content-center">
                 <div
-                    className="px-4 py-5 shadow-2 flex flex-column md:flex-row md:align-items-center justify-content-between mb-3"
                     style={{
-                        borderRadius: '1rem',
-                        background: 'linear-gradient(0deg, rgba(0, 123, 255, 0.5), rgba(0, 123, 255, 0.5)), linear-gradient(92.54deg, #1C80CF 47.88%, #FFFFFF 100.01%)'
+                        borderRadius: '56px',
+                        padding: '0.3rem',
+                        background: 'linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)'
                     }}
                 >
-                    <div>
-                        <div className="text-blue-100 font-medium text-xl mt-2 mb-3">TAKE THE NEXT STEP</div>
-                        <div className="text-white font-medium text-5xl">Try PrimeBlocks</div>
-                    </div>
-                    <div className="mt-4 mr-auto md:mt-0 md:mr-0">
-                        <Link href="https://blocks.primereact.org" className="p-button font-bold px-5 py-3 p-button-warning p-button-rounded p-button-raised">
-                            Get Started
-                        </Link>
+                    <div className="w-full surface-card py-8 px-5 sm:px-8" style={{ borderRadius: '53px' }}>
+                        <div className="text-center mb-5">
+                            <img src="/demo/images/logo.png" alt="Recife Pet logo" className="mb-5 w-6rem flex-shrink-0" />
+                        </div>
+
+                        <div>
+                            <label htmlFor="email1" className="block text-900 text-xl font-medium mb-2">
+                                Email
+                            </label>
+                            <InputText id="email1" value={email} onChange={e => setEmail(e.target.value)} type="text" placeholder="Email address" className="w-full md:w-30rem mb-5" style={{ padding: '1rem' }} />
+
+                            <label htmlFor="password1" className="block text-900 font-medium text-xl mb-2">
+                                Password
+                            </label>
+                            <Password inputId="password1" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" toggleMask className="w-full mb-5" inputClassName="w-full p-3 md:w-30rem"></Password>
+
+                            <div className="flex align-items-center justify-content-between mb-5 gap-5">
+                                <div className="flex align-items-center">
+                                    <Checkbox inputId="rememberme1" checked={checked} onChange={(e) => setChecked(e.checked ?? false)} className="mr-2"></Checkbox>
+                                    <label htmlFor="rememberme1">Remember me</label>
+                                </div>
+                            </div>
+                            <Button label="Sign In" className="w-full p-3 text-xl" onClick={login}></Button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,4 +81,4 @@ const Dashboard = () => {
     );
 };
 
-export default Dashboard;
+export default Login;

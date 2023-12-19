@@ -15,22 +15,21 @@ import { CustomerService } from '../../../../demo/service/CustomerService';
 import { Demo } from '../../../../types/types';
 import { FirebaseApp, initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { getDatabase, ref, set, push, onValue, remove, update } from "firebase/database";
+import {  getDatabase, ref, push, update, remove, child, } from "firebase/database";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyClEKcEsrs5Zso5koXdtHAYXl7dgjERTaY",
-    authDomain: "pets-recife.firebaseapp.com",
-    projectId: "pets-recife",
-    storageBucket: "pets-recife.appspot.com",
-    messagingSenderId: "294793361040",
-    appId: "1:294793361040:web:6f0ef5799180e22aed8a15",
-    measurementId: "G-7FZ8WYT98T"
-  };
+    apiKey: 'AIzaSyDln_aynwxbhCOh9O3xcT1RXQnfQkNgPPc',
+    authDomain: 'fnr-devops.firebaseapp.com',
+    projectId: 'fnr-devops',
+    storageBucket: 'fnr-devops.appspot.com',
+    messagingSenderId: '893145544957',
+    appId: '1:893145544957:web:8884874c956f24bbce2694',
+    measurementId: 'G-WDYGHM4JM8'
+};
 
 const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-
-
+const db = getDatabase(app);
+type Customer = Demo.Customer;
 const CrudTutores = () => {
     let tutorVazio: Demo.Customer = { 
         id: '',
@@ -59,14 +58,11 @@ const CrudTutores = () => {
     const [cepInfo, setCepInfo] = useState<{ cidade: string; estado: string; bairro: string } | null>(null);
     const dt = useRef<DataTable<any>>(null);
     type TutorKey = keyof Demo.Customer;
-    const SeuComponente = () => {
-        const [globalFilter, setGlobalFilter] = useState('');}
   
-
     useEffect(() => {
         CustomerService.getCustomersLarge().then((data) => setTutores(data as any));
     }, []);
-    
+
     const openNew = () => {
         setTutor(tutorVazio);
         setSubmitted(false);
@@ -82,40 +78,35 @@ const CrudTutores = () => {
         setDeleteTutoresDialog(false);
     };
     
-    const saveTutor = () => {
+    const saveTutor = async () => {
         setSubmitted(true);
     
-        if (tutor.name?.trim()) {
-            let _tutores = [...(tutores as unknown as Demo.Customer[])];
+        if (tutor.name.trim()) {
+            const db = getDatabase();
+            
             let _tutor = { ...tutor };
-    
+
             if (cepInfo) {
                 _tutor.cidade = cepInfo.cidade;
                 _tutor.estado = cepInfo.estado;
                 _tutor.bairro = cepInfo.bairro;
             }
-    
+            
             if (_tutor.id) {
-                const tutorRef = ref(database, `tutors/${_tutor.id}`); // Update the reference to 'tutors'
-                update(tutorRef, _tutor);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Tutor Updated',
-                    life: 3000
-                });
+                const tutorRef = ref(db, `tutors/${_tutor.id}`);
+                await update(tutorRef, _tutor);
             } else {
-                // Criar novo tutor
-                const tutorsRef = ref(database, 'tutors');
-                const newTutorRef = push(tutorsRef);
+           
+                const tutoresRef = ref(db, "tutors");
+                const newTutorRef = push(tutoresRef);
                 const newTutorId = newTutorRef.key;
-    
+            
                 const newTutorData = {
                     id: newTutorId,
                     name: _tutor.name,
-                    rua: _tutor.rua,
-                    bairro: _tutor.bairro, // Corrected property name
-                    numero: _tutor.numero, // Corrected property name
+                    rua:_tutor.rua,
+                    bairro: _tutor.bairro,
+                    numero: _tutor.numero,
                     cidade: _tutor.cidade,
                     cep: _tutor.cep,
                     estado: _tutor.estado,
@@ -123,23 +114,22 @@ const CrudTutores = () => {
                     cpf: _tutor.cpf,
                     sexo: _tutor.sexo
                 };
-    
-                push(newTutorRef, newTutorData);
-    
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Tutor Created',
-                    life: 3000
-                });
+            
+                await addDoc(collection(getFirestore(), "tutors"), newTutorData);
             }
-    
+            
+            toast.current?.show({
+                severity: "success",
+                summary: "Successful",
+                detail: _tutor.id ? "Tutor Updated" : "Tutor Created",
+                life: 3000,
+            });
+            
             setTutorDialog(false);
             setTutor(tutorVazio);
         }
     };
     
-        
     const editTutor = (tutor: Demo.Customer) => {
         setTutor({ ...tutor });
         setTutorDialog(true);
@@ -442,35 +432,75 @@ const CrudTutores = () => {
                     </div>
                     <div className="field">
                         <label htmlFor="rua">Rua</label>
-                        <InputTextarea id="rua" value={tutor.rua} onChange={(e) => onInputChange(e, 'rua')} required rows={3} cols={20} />
+                        <InputTextarea id="rua" value={tutor.rua} onChange={(e) => onInputChange(e, 'rua')} required rows={3} cols={20} 
+                         className={classNames({
+                            'p-invalid': submitted && !tutor.rua
+                        })}
+                    />
+                    {submitted && !tutor.rua && <small className="p-invalid">Rua é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="bairro">Bairro</label>
-                        <InputText id="bairro" value={cepInfo?.bairro || tutor.bairro} onChange={(e) => onInputChange(e, 'bairro')} required />
+                        <InputText id="bairro" value={cepInfo?.bairro || tutor.bairro} onChange={(e) => onInputChange(e, 'bairro')} required 
+                          className={classNames({
+                            'p-invalid': submitted && !tutor.bairro
+                        })}
+                    />
+                    {submitted && !tutor.bairro && <small className="p-invalid">Bairro é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="numero">Número</label>
-                        <InputNumber id="numero" value={tutor.numero} onChange={(e) => onInputNumberChange(e, 'numero')}  />
+                        <InputNumber id="numero" value={tutor.numero} onChange={(e) => onInputNumberChange(e, 'numero')} required
+                          className={classNames({
+                            'p-invalid': submitted && !tutor.numero
+                        })}
+                    />
+                    {submitted && !tutor.numero && <small className="p-invalid">Numero é obrigatório.</small>} 
                         </div>
                     <div className="field">
                         <label htmlFor="cidade">Cidade</label>
-                        <InputText id="cidade" value={cepInfo?.cidade || tutor.cidade} onChange={(e) => onInputChange(e, 'cidade')} required />
+                        <InputText id="cidade" value={cepInfo?.cidade || tutor.cidade} onChange={(e) => onInputChange(e, 'cidade')} required 
+                          className={classNames({
+                            'p-invalid': submitted && !tutor.cidade
+                        })}
+                    />
+                    {submitted && !tutor.cidade && <small className="p-invalid">Cidade é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="cep">CEP</label>
-                        <InputText id="cep" value={tutor.cep} onChange={(e) => onInputChange(e, 'cep')} required />
+                        <InputText id="cep" value={tutor.cep} onChange={(e) => onInputChange(e, 'cep')} required 
+                        className={classNames({
+                            'p-invalid': submitted && !tutor.cep
+                        })}
+                    />
+                    {submitted && !tutor.cep && <small className="p-invalid">CEP é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="estado">Estado</label>
-                        <InputText id="estado" value={cepInfo?.estado || tutor.estado} onChange={(e) => onInputChange(e, 'estado')} required />
+                        <InputText id="estado" value={cepInfo?.estado || tutor.estado} onChange={(e) => onInputChange(e, 'estado')} required 
+                        className={classNames({
+                            'p-invalid': submitted && !tutor.estado
+                        })}
+                    />
+                    {submitted && !tutor.estado && <small className="p-invalid">Estado é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="telefone">Telefone</label>
-                        <InputText id="telefone" value={tutor.telefone} onChange={(e) => onInputChange(e, 'telefone')} required />
+                        <InputText id="telefone" value={tutor.telefone} onChange={(e) => onInputChange(e, 'telefone')} required 
+                        className={classNames({
+                            'p-invalid': submitted && !tutor.telefone
+                        })}
+                    />
+                    {submitted && !tutor.telefone && <small className="p-invalid">Telefone é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="cpf">CPF</label>
-                        <InputText id="cpf" value={tutor.cpf} onChange={(e) => onInputChange(e, 'cpf')} required />
+                        <InputText id="cpf" value={tutor.cpf} onChange={(e) => onInputChange(e, 'cpf')} required 
+                        className={classNames({
+                            'p-invalid': submitted && !tutor.cpf
+                        })}
+                    />
+                    {submitted && !tutor.cpf && <small className="p-invalid">CPF é obrigatório.</small>} 
                     </div>
                     <div className="field">
                         <label htmlFor="sexo">Sexo</label>
@@ -488,6 +518,9 @@ const CrudTutores = () => {
                                 <label htmlFor="outro">Outro</label>
                             </div>
                             </div>
+                            {submitted && !tutor.sexo && (
+                        <small className="p-invalid">Selecione uma opção de sexo.</small>
+            )}
                     </div>
                     </Dialog>
 

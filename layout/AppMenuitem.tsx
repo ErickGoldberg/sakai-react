@@ -8,12 +8,15 @@ import { CSSTransition } from 'react-transition-group';
 import { MenuContext } from './context/menucontext';
 import { AppMenuItemProps } from '../types/types';
 import { usePathname, useSearchParams } from 'next/navigation'
+import { LayoutContext } from './context/layoutcontext';
 
+const LOGOUT = '0-4'
 
 const AppMenuitem = (props: AppMenuItemProps) => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { activeMenu, setActiveMenu } = useContext(MenuContext);
+    const { setLayoutState } = useContext(LayoutContext);
     const item = props.item;
     const key = props.parentKey ? props.parentKey + '-' + props.index : String(props.index);
     const isActiveRoute = item!.to && pathname === item!.to;
@@ -31,6 +34,15 @@ const AppMenuitem = (props: AppMenuItemProps) => {
     }, [pathname, searchParams]);
 
     const itemClick = (event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+        if(key === LOGOUT) {
+            setLayoutState(prevState => {
+                return {
+                    ...prevState,
+                    showAppTopBar: false,
+                    staticMenuDesktopInactive: true,
+                }
+            })
+        }
         //avoid processing disabled items
         if (item!.disabled) {
             event.preventDefault();

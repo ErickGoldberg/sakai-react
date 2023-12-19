@@ -68,7 +68,6 @@ const MediaDemo = () => {
                     <div className="car-buttons mt-5">
                         <Button type="button" className="mr-2" rounded icon="pi pi-search"></Button>
                         <Button type="button" className="mr-2" severity="success" rounded icon="pi pi-star"></Button>
-                        <Button type="button" severity="help" rounded icon="pi pi-cog"></Button>
                     </div>
                 </div>
             </div>

@@ -118,10 +118,11 @@ declare namespace Demo {
         ownerId: number;
         createdAt: number;
     }
+    
 
     //ProductService
     type Product = {
-        id?: string;
+        id: string;
         name: string;
         especie: string;
         idade: number;

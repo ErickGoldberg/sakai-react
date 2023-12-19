@@ -27,6 +27,7 @@ export type LayoutState = {
     configSidebarVisible: boolean;
     staticMenuMobileActive: boolean;
     menuHoverActive: boolean;
+    showAppTopBar: boolean;
 };
 
 export type LayoutConfig = {
