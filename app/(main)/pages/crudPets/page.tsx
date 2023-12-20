@@ -197,7 +197,7 @@ const firebaseConfig = {
       return (
         <React.Fragment>
           <div className="my-2">
-            <Button label="New" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} />
+            <Button label="Novo" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} />
             <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedProducts || !(selectedProducts as any).length} />
           </div>
         </React.Fragment>
