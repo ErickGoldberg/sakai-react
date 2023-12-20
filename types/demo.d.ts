@@ -8,6 +8,8 @@ type InventoryStatus = 'INSTOCK' | 'LOWSTOCK' | 'OUTOFSTOCK';
 
 type Status = 'DELIVERED' | 'PENDING' | 'RETURNED' | 'CANCELLED';
 
+type ServicoKey = "id" | "name" | "descricao" | "preco" | "duracao";
+
 export type LayoutType = 'list' | 'grid';
 export type SortOrderType = 1 | 0 | -1;
 
@@ -116,19 +118,19 @@ declare namespace Demo {
         ownerId: number;
         createdAt: number;
     }
+    
 
     //ProductService
     type Product = {
-        id?: string;
-        code?: string;
+        id: string;
         name: string;
-        description: string;
-        image?: string;
-        price?: number;
-        category?: string;
-        quantity?: number;
-        inventoryStatus?: InventoryStatus;
-        rating?: number;
+        especie: string;
+        idade: number;
+        date: string;
+        peso: number;
+        quantity: number;
+        cor: string;
+        sexo: string;
         orders?: ProductOrder[];
         [key: string]: string | string[] | number | boolean | undefined | ProductOrder[] | InventoryStatus;
     };
@@ -143,34 +145,28 @@ declare namespace Demo {
         status?: Status;
     };
 
-    type Payment = {
+    type Event = {
+        id: string;
         name: string;
-        amount: number;
-        paid: boolean;
-        date: string;
+        descricao: string;
+        preco: number;
+        duracao: number;
     };
 
     //CustomerService
     type Customer = {
-        id?: number;
-        name?: string;
-        country?: ICountryObject;
-        company?: string;
-        date: Date;
-        status?: string;
-        activity?: number;
-        balance?: number | string;
-        verified?: boolean;
-        amount?: number;
-        price?: number;
-        rating?: number;
-        image?: string;
-        orders?: Demo.Customer[];
-        inventoryStatus?: string;
-        representative: {
-            name: string;
-            image: string;
-        };
+        id: string;
+        name: string;
+        rua: string;
+        bairro: string;
+        numero: number;
+        cidade: string;
+        cep: string;
+        estado: string;
+        telefone: string;
+        cpf: string;
+        sexo: string;
+        [key: string]: string | number; 
     };
 
     interface Event extends EventInput {

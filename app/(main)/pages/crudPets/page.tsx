@@ -4,401 +4,464 @@ import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
-import { FileUpload } from 'primereact/fileupload';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { RadioButton, RadioButtonChangeEvent } from 'primereact/radiobutton';
-import { Rating } from 'primereact/rating';
 import { Toast } from 'primereact/toast';
 import { Toolbar } from 'primereact/toolbar';
 import { classNames } from 'primereact/utils';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext} from 'react';
 import { ProductService } from '../../../../demo/service/ProductService';
 import { Demo } from '../../../../types/types';
+import { Calendar } from 'primereact/calendar';
+import { CalendarChangeEvent } from 'primereact/calendar';
+import {format, set} from 'date-fns';
+import { FirebaseApp, initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, setDoc, DocumentData } from "firebase/firestore";
+import {  getDatabase, ref, push, update, remove, child, } from "firebase/database";
 
-/* @todo Used 'as any' for types here. Will fix in next version due to onSelectionChange event type issue. */
-const CrudPets = () => {
-    let emptyProduct: Demo.Product = {
-        id: '',
-        name: '',
-        image: '',
-        description: '',
-        category: '',
-        price: 0,
-        quantity: 0,
-        rating: 0,
-        inventoryStatus: 'INSTOCK'
+
+const firebaseConfig = {
+    apiKey: 'AIzaSyDln_aynwxbhCOh9O3xcT1RXQnfQkNgPPc',
+    authDomain: 'fnr-devops.firebaseapp.com',
+    projectId: 'fnr-devops',
+    storageBucket: 'fnr-devops.appspot.com',
+    messagingSenderId: '893145544957',
+    appId: '1:893145544957:web:8884874c956f24bbce2694',
+    measurementId: 'G-WDYGHM4JM8'
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  
+  const CrudPets = () => {
+    const emptyProduct: Demo.Product = {
+      id: '',
+      name: '',
+      especie: '',
+      idade: 0,
+      date: '',
+      peso: 0,
+      quantity: 0,
+      cor: '',
+      sexo: 'M'
     };
-
-    const [products, setProducts] = useState(null);
+  
+    const [products, setProducts] = useState<Demo.Product[] | null>(null);
     const [productDialog, setProductDialog] = useState(false);
     const [deleteProductDialog, setDeleteProductDialog] = useState(false);
     const [deleteProductsDialog, setDeleteProductsDialog] = useState(false);
     const [product, setProduct] = useState<Demo.Product>(emptyProduct);
-    const [selectedProducts, setSelectedProducts] = useState(null);
+    const [selectedProducts, setSelectedProducts] = useState<Demo.Product[] | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [globalFilter, setGlobalFilter] = useState('');
     const toast = useRef<Toast>(null);
     const dt = useRef<DataTable<any>>(null);
-
+  
     useEffect(() => {
-        ProductService.getProducts().then((data) => setProducts(data as any));
+      const fetchData = async () => {
+        try {
+          const response = await ProductService.getProducts();
+          setProducts(response);
+        } catch (error) {
+          console.error('Error fetching products:', error);
+        }
+      };
+  
+      fetchData();
     }, []);
-
-    const formatCurrency = (value: number) => {
-        return value.toLocaleString('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        });
-    };
-
+  
     const openNew = () => {
-        setProduct(emptyProduct);
-        setSubmitted(false);
-        setProductDialog(true);
+      setProduct(emptyProduct);
+      setSubmitted(false);
+      setProductDialog(true);
     };
-
+  
     const hideDialog = () => {
-        setSubmitted(false);
-        setProductDialog(false);
+      setSubmitted(false);
+      setProductDialog(false);
     };
-
+  
     const hideDeleteProductDialog = () => {
-        setDeleteProductDialog(false);
+      setDeleteProductDialog(false);
     };
-
+  
     const hideDeleteProductsDialog = () => {
-        setDeleteProductsDialog(false);
+      setDeleteProductsDialog(false);
     };
-
-    const saveProduct = () => {
-        setSubmitted(true);
-
-        if (product.name.trim()) {
-            let _products = [...(products as any)];
-            let _product = { ...product };
-            if (product.id) {
-                const index = findIndexById(product.id);
-
-                _products[index] = _product;
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Updated',
-                    life: 3000
-                });
-            } else {
-                _product.id = createId();
-                _product.image = 'product-placeholder.svg';
-                _products.push(_product);
-                toast.current?.show({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Created',
-                    life: 3000
-                });
-            }
-
-            setProducts(_products as any);
-            setProductDialog(false);
-            setProduct(emptyProduct);
+  
+    const saveProduct = async () => {
+      setSubmitted(true);
+  
+      if (product.name.trim() && product.especie.trim() && product.date) {
+        const db = getFirestore();
+        let _product = { ...product };
+  
+        if (product.id) {
+          const productRef = doc(db, "products", product.id);
+          await setDoc(productRef, _product);
+        } else {
+          const productsRef = collection(db, "products");
+          const newProductRef = doc(productsRef);
+          const newProductId = newProductRef.id;
+  
+          const newPetData = { ..._product, id: newProductId };
+          await setDoc(newProductRef, newPetData);
         }
-    };
-
-    const editProduct = (product: Demo.Product) => {
-        setProduct({ ...product });
-        setProductDialog(true);
-    };
-
-    const confirmDeleteProduct = (product: Demo.Product) => {
-        setProduct(product);
-        setDeleteProductDialog(true);
-    };
-
-    const deleteProduct = () => {
-        let _products = (products as any)?.filter((val: any) => val.id !== product.id);
-        setProducts(_products);
-        setDeleteProductDialog(false);
+  
+        toast.current?.show({
+          severity: "success",
+          summary: "Successful",
+          detail: product.id ? "Product Updated" : "Product Created",
+          life: 3000,
+        });
+  
+        setProductDialog(false);
         setProduct(emptyProduct);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Successful',
-            detail: 'Product Deleted',
-            life: 3000
-        });
+      }
     };
-
-    const findIndexById = (id: string) => {
-        let index = -1;
-        for (let i = 0; i < (products as any)?.length; i++) {
-            if ((products as any)[i].id === id) {
-                index = i;
-                break;
-            }
-        }
-
-        return index;
+  
+    const deleteProduct = async () => {
+      const db = getDatabase();
+      const productRef = ref(db, `products/${product.id}`);
+      await remove(productRef);
+  
+      toast.current?.show({
+        severity: "success",
+        summary: "Successful",
+        detail: "Product Deleted",
+        life: 3000,
+      });
+  
+      setDeleteProductDialog(false);
+      setProduct(emptyProduct);
     };
-
-    const createId = () => {
-        let id = '';
-        let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return id;
-    };
-
-    const exportCSV = () => {
-        dt.current?.exportCSV();
-    };
-
+  
     const confirmDeleteSelected = () => {
-        setDeleteProductsDialog(true);
+      setDeleteProductsDialog(true);
     };
-
-    const deleteSelectedProducts = () => {
-        let _products = (products as any)?.filter((val: any) => !(selectedProducts as any)?.includes(val));
-        setProducts(_products);
-        setDeleteProductsDialog(false);
-        setSelectedProducts(null);
-        toast.current?.show({
-            severity: 'success',
-            summary: 'Successful',
-            detail: 'Products Deleted',
-            life: 3000
-        });
+  
+    const deleteSelectedProducts = async () => {
+      const db = getDatabase();
+      const productsRef = ref(db, "products");
+  
+      for (const selectedProduct of (selectedProducts || []) as Demo.Product[]) {
+        if (selectedProduct && selectedProduct.id) {
+          const productRef = ref(db, `products/${selectedProduct.id}`);
+          await remove(productRef);
+        }
+      }
+  
+      toast.current?.show({
+        severity: "success",
+        summary: "Successful",
+        detail: "Products Deleted",
+        life: 3000,
+      });
+  
+      setDeleteProductsDialog(false);
+      setSelectedProducts(null);
     };
-
+  
     const onCategoryChange = (e: RadioButtonChangeEvent) => {
-        let _product = { ...product };
-        _product['category'] = e.value;
-        setProduct(_product);
+      let _product = { ...product };
+      _product['sexo'] = e.value;
+      setProduct(_product);
     };
-
+  
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, name: string) => {
-        const val = (e.target && e.target.value) || '';
-        let _product = { ...product };
-        _product[`${name}`] = val;
-
-        setProduct(_product);
+      const val = e.target?.value || '';
+      let _product = { ...product };
+      _product[`${name}`] = val;
+  
+      setProduct(_product);
     };
-
+  
     const onInputNumberChange = (e: InputNumberValueChangeEvent, name: string) => {
-        const val = e.value || 0;
-        let _product = { ...product };
-        _product[`${name}`] = val;
-
-        setProduct(_product);
+      const val = (e && e.value) || 0;
+      let _product = { ...product };
+      _product[`${name}`] = val;
+  
+      setProduct(_product);
     };
-
-    const leftToolbarTemplate = () => {
-        return (
-            <React.Fragment>
-                <div className="my-2">
-                    <Button label="New" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} />
-                    <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedProducts || !(selectedProducts as any).length} />
-                </div>
-            </React.Fragment>
-        );
+  
+    const onDateChange = (e: CalendarChangeEvent, name: string) => {
+      const val = e.value instanceof Date ? format(e.value, 'dd/MM/yy') : '';
+      let _product = { ...product };
+      _product[`${name}`] = val;
+      setProduct(_product);
     };
-
+  
     const rightToolbarTemplate = () => {
-        return (
-            <React.Fragment>
-                <FileUpload mode="basic" accept="image/*" maxFileSize={1000000} chooseLabel="Import" className="mr-2 inline-block" />
-                <Button label="Export" icon="pi pi-upload" severity="help" onClick={exportCSV} />
-            </React.Fragment>
-        );
+      return (
+        <React.Fragment>
+          <div className="my-2">
+            <Button label="New" icon="pi pi-plus" severity="success" className=" mr-2" onClick={openNew} />
+            <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={confirmDeleteSelected} disabled={!selectedProducts || !(selectedProducts as any).length} />
+          </div>
+        </React.Fragment>
+      );
     };
-
-    const codeBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Code</span>
-                {rowData.code}
-            </>
-        );
-    };
-
+  
     const nameBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Name</span>
-                {rowData.name}
-            </>
-        );
-    };
-
-    const imageBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Image</span>
-                <img src={`/demo/images/product/${rowData.image}`} alt={rowData.image} className="shadow-2" width="100" />
-            </>
-        );
-    };
-
-    const priceBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Price</span>
-                {formatCurrency(rowData.price as number)}
-            </>
-        );
-    };
-
-    const categoryBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Category</span>
-                {rowData.category}
-            </>
-        );
-    };
-
-    const ratingBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Reviews</span>
-                <Rating value={rowData.rating} readOnly cancel={false} />
-            </>
-        );
-    };
-
-    const statusBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <span className="p-column-title">Status</span>
-                <span className={`product-badge status-${rowData.inventoryStatus?.toLowerCase()}`}>{rowData.inventoryStatus}</span>
-            </>
-        );
-    };
-
-    const actionBodyTemplate = (rowData: Demo.Product) => {
-        return (
-            <>
-                <Button icon="pi pi-pencil" rounded severity="success" className="mr-2" onClick={() => editProduct(rowData)} />
-                <Button icon="pi pi-trash" rounded severity="warning" onClick={() => confirmDeleteProduct(rowData)} />
-            </>
-        );
-    };
-
-    const header = (
-        <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-            <h5 className="m-0">Pets cadastrados</h5>
-            <span className="block mt-2 md:mt-0 p-input-icon-left">
-                <i className="pi pi-search" />
-                <InputText type="search" onInput={(e) => setGlobalFilter(e.currentTarget.value)} placeholder="Search..." />
-            </span>
-        </div>
-    );
-
-    const productDialogFooter = (
+      return (
         <>
-            <Button label="Cancelar" icon="pi pi-times" text onClick={hideDialog} />
-            <Button label="Salvar" icon="pi pi-check" text onClick={saveProduct} />
+          <span className="p-column-title">Nome</span>
+          {rowData.name}
         </>
+      );
+    };
+  
+    const especieBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Raça</span>
+          {rowData.especie}
+        </>
+      );
+    };
+  
+    const idadeBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Idade</span>
+          {rowData.idade}
+        </>
+      );
+    };
+  
+    const dateBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Data de Nascimento</span>
+          {rowData.date}
+        </>
+      );
+    };
+  
+    const pesoBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Peso</span>
+          {rowData.peso}
+        </>
+      );
+    };
+    const corBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Cor</span>
+          {rowData.cor}
+        </>
+      );
+    };
+    const sexoBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <span className="p-column-title">Sexo</span>
+          {rowData.sexo}
+        </>
+      );
+    };
+  
+    const actionBodyTemplate = (rowData: Demo.Product) => {
+      return (
+        <>
+          <Button icon="pi pi-pencil" rounded severity="success" className="mr-2" onClick={() => setProduct(rowData)} />
+          <Button icon="pi pi-trash" rounded severity="warning" onClick={() => setDeleteProductDialog(true)} />
+        </>
+      );
+    };
+  
+    const header = (
+      <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
+        <h5 className="m-0">Pets cadastrados</h5>
+        <span className="block mt-2 md:mt-0 p-input-icon-left">
+          <i className="pi pi-search" />
+          <InputText type="search" onInput={(e) => setGlobalFilter(e?.currentTarget?.value || '')} placeholder="Search..." />
+        </span>
+      </div>
+    );
+  
+    const productDialogFooter = (
+      <>
+        <Button label="Cancelar" icon="pi pi-times" text onClick={hideDialog} />
+        <Button label="Salvar" icon="pi pi-check" text onClick={saveProduct} />
+      </>
     );
     const deleteProductDialogFooter = (
-        <>
-            <Button label="No" icon="pi pi-times" text onClick={hideDeleteProductDialog} />
-            <Button label="Yes" icon="pi pi-check" text onClick={deleteProduct} />
-        </>
+      <>
+        <Button label="No" icon="pi pi-times" text onClick={hideDeleteProductDialog} />
+        <Button label="Yes" icon="pi pi-check" text onClick={deleteProduct} />
+      </>
     );
     const deleteProductsDialogFooter = (
-        <>
-            <Button label="No" icon="pi pi-times" text onClick={hideDeleteProductsDialog} />
-            <Button label="Yes" icon="pi pi-check" text onClick={deleteSelectedProducts} />
-        </>
+      <>
+        <Button label="No" icon="pi pi-times" text onClick={hideDeleteProductsDialog} />
+        <Button label="Yes" icon="pi pi-check" text onClick={deleteSelectedProducts} />
+      </>
     );
-
+  
     return (
-        <div className="grid crud-demo">
-            <div className="col-12">
-                <div className="card">
-                    <Toast ref={toast} />
-                    <Toolbar className="mb-4" left={leftToolbarTemplate} right={rightToolbarTemplate}></Toolbar>
+      <div className="grid crud-demo">
+        <div className="col-12">
+          <div className="card">
+            <Toast ref={toast} />
+            <Toolbar className="mb-4" right={rightToolbarTemplate}></Toolbar>
+  
+            <DataTable
+              ref={dt}
+              value={products}
+              selection={selectedProducts}
+              onSelectionChange={(e) => setSelectedProducts(e?.value as any)}
+              dataKey="id"
+              paginator
+              rows={10}
+              rowsPerPageOptions={[5, 10, 25]}
+              className="datatable-responsive"
+              paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+              currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+              globalFilter={globalFilter}
+              emptyMessage="No products found."
+              header={header}
+              responsiveLayout="scroll"
+            >
+              <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
+              <Column field="name" header="Nome" body={nameBodyTemplate} headerStyle={{ minWidth: '8rem' }}></Column>
+              <Column field="especie" header="Especie" body={especieBodyTemplate} headerStyle={{ minWidth: '8rem' }}></Column>
+              <Column field="idade" header="Idade" body={idadeBodyTemplate} headerStyle={{ minWidth: '5rem' }}></Column>
+              <Column field="date" header="Data de Nascimento" body={dateBodyTemplate}></Column>
+              <Column field="peso" header="Peso" body={pesoBodyTemplate} headerStyle={{ minWidth: '7rem' }}></Column>
+              <Column field="cor" header="Cor" body={corBodyTemplate}></Column>
+              <Column field="sexo" header="Sexo" body={sexoBodyTemplate}></Column>
+              <Column body={actionBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
+            </DataTable>
+  
+            <Dialog visible={productDialog} style={{ width: '450px' }} header="Cadastrar pets" modal className="p-fluid" footer={productDialogFooter} onHide={hideDialog}>
+  
+              <div className="field">
+                <label htmlFor="name">Nome do pet</label>
+                <InputText
+                  id="name"
+                  value={product.name}
+                  onChange={(e) => onInputChange(e, 'name')}
+                  required
+                  autoFocus
+                  className={classNames({
+                    'p-invalid': submitted && !product.name
+                  })}
+                />
+                {submitted && !product.name && <small className="p-invalid">Nome é obrigatório.</small>}
+              </div>
+              <div className="field">
+                <label htmlFor="especie">Raça</label>
+                <InputText id="especie" value={product.especie} onChange={(e) => onInputChange(e, 'especie')} required 
+                 className={classNames({
+                  'p-invalid': submitted && !product.especie
+                })}
+              />
+              {submitted && !product.especie && <small className="p-invalid">Raça é obrigatória.</small>}
+              </div>
+              <div className="field col">
+                <label htmlFor="idade">Idade</label>
+                <InputNumber
+                  id="idade"
+                  value={product.idade}
+                  onValueChange={(e) => onInputNumberChange(e, 'idade')}
+                  required
+                  className={classNames({
+                    'p-invalid': submitted && !product.idade
+                  })}
+                />
+                {submitted && !product.idade && <small className="p-invalid">Idade é obrigatória.</small>}
+          
+              </div>
+              <div className="field">
+                <label htmlFor="date">Data de Nascimento</label>
+                <Calendar
+                  id="date"
+                  value={product.date ? new Date(product.date) : null}
+                  onChange={(e) => onDateChange(e, 'date')}
+                  dateFormat="dd/mm/yy"
+                  showIcon
+                  className={classNames({
+                    'p-invalid': submitted && !product.date
+                  })}
+                />
+                {submitted && !product.date && <small className="p-invalid">Data de Nascimento é obrigatória.</small>}
+              </div>
 
-                    <DataTable
-                        ref={dt}
-                        value={products}
-                        selection={selectedProducts}
-                        onSelectionChange={(e) => setSelectedProducts(e.value as any)}
-                        dataKey="id"
-                        paginator
-                        rows={10}
-                        rowsPerPageOptions={[5, 10, 25]}
-                        className="datatable-responsive"
-                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
-                        globalFilter={globalFilter}
-                        emptyMessage="No products found."
-                        header={header}
-                        responsiveLayout="scroll"
-                    >
-                        <Column selectionMode="multiple" headerStyle={{ width: '4rem' }}></Column>
-                        <Column field="code" header="Code" sortable body={codeBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
-                        <Column field="name" header="Name" sortable body={nameBodyTemplate} headerStyle={{ minWidth: '15rem' }}></Column>
-                        <Column header="Image" body={imageBodyTemplate}></Column>
-                        <Column field="price" header="Price" body={priceBodyTemplate} sortable></Column>
-                        <Column field="category" header="Category" sortable body={categoryBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
-                        <Column field="rating" header="Reviews" body={ratingBodyTemplate} sortable></Column>
-                        <Column field="inventoryStatus" header="Status" body={statusBodyTemplate} sortable headerStyle={{ minWidth: '10rem' }}></Column>
-                        <Column body={actionBodyTemplate} headerStyle={{ minWidth: '10rem' }}></Column>
-                    </DataTable>
+              <div className="field col">
+                <label htmlFor="peso">Peso</label>
+                <InputNumber
+                    id="peso"
+                    value={product.peso}
+                    onValueChange={(e) => onInputNumberChange(e, 'peso')}
+                    className={classNames({
+                        'p-invalid': submitted && (product.peso <= 0 || product.peso > 100)
+                    })}
+                />
+                {submitted && (product.peso <= 0 || product.peso > 100) && (
+                    <small className="p-invalid">O peso deve ser maior que 0 e menor ou igual a 100.</small>
+                )}
+             </div>
 
-                    <Dialog visible={productDialog} style={{ width: '450px' }} header="Cadastrar pets" modal className="p-fluid" footer={productDialogFooter} onHide={hideDialog}>
-                        {product.image && <img src={`/demo/images/product/${product.image}`} alt={product.image} width="150" className="mt-0 mx-auto mb-5 block shadow-2" />}
-                        <div className="field">
-                            <label htmlFor="name">Nome do Pet</label>
-                            <InputText
-                                id="name"
-                                value={product.name}
-                                onChange={(e) => onInputChange(e, 'name')}
-                                required
-                                autoFocus
-                                className={classNames({
-                                    'p-invalid': submitted && !product.name
-                                })}
-                            />
-                            {submitted && !product.name && <small className="p-invalid">Name is required.</small>}
-                        </div>
-                        <div className="field">
-                            <label htmlFor="specie">Espécie</label>
-                            <InputTextarea id="specie" value={product.description} onChange={(e) => onInputChange(e, 'description')} required rows={3} cols={20} />
-                        </div>
-                        <div className="field col">
-                                <label htmlFor="age">Idade</label>
-                                <InputNumber id="age" value={product.quantity} onValueChange={(e) => onInputNumberChange(e, 'quantity')} />
-                            </div>
-                            <div className="field col">
-                                <label htmlFor="wheight">Peso</label>
-                                <InputNumber id="wheight" value={product.quantity} onValueChange={(e) => onInputNumberChange(e, 'quantity')} />
-                            </div>
-                            <div className="field">
-                            <label htmlFor="color">Cor</label>
-                            <InputTextarea id="color" value={product.description} onChange={(e) => onInputChange(e, 'description')} required rows={3} cols={20} />
-                        </div>
+             <div className="field">
+                <label htmlFor="cor">Cor</label>
+                <InputText
+                    id="cor"
+                    value={product.cor}
+                    onChange={(e) => onInputChange(e, 'cor')}
+                    className={classNames({
+                        'p-invalid': submitted && !product.cor
+                    })}
+                />
+                {submitted && !product.cor && (
+                    <small className="p-invalid">A cor é obrigatória.</small>
+                )}
+             </div>
 
-                        <div className="field">
-                            <label className="mb-3">Sexo:</label>
-                            <div className="formgrid grid">
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category1" name="category" value="Accessories" onChange={onCategoryChange} checked={product.category === 'Accessories'} />
-                                    <label htmlFor="category1">Masculino</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category2" name="category" value="Clothing" onChange={onCategoryChange} checked={product.category === 'Clothing'} />
-                                    <label htmlFor="category2">Feminino</label>
-                                </div>
-                                <div className="field-radiobutton col-6">
-                                    <RadioButton inputId="category3" name="category" value="Electronics" onChange={onCategoryChange} checked={product.category === 'Electronics'} />
-                                    <label htmlFor="category3">Outro</label>
-                                </div>
-                            </div>
-                        </div>
+
+            <div className="field">
+                <label className="mb-3">Sexo:</label>
+                <div className="formgrid grid">
+                    <div className="field-radiobutton col-6">
+                        <RadioButton
+                            inputId="masculino"
+                            name="sexo"
+                            value="M"
+                            onChange={onCategoryChange}
+                            checked={product.sexo === 'M'}
+                        />
+                        <label htmlFor="masculino">Masculino</label>
+                    </div>
+                    <div className="field-radiobutton col-6">
+                        <RadioButton
+                            inputId="feminino"
+                            name="sexo"
+                            value="F"
+                            onChange={onCategoryChange}
+                            checked={product.sexo === 'F'}
+                        />
+                        <label htmlFor="feminino">Feminino</label>
+                    </div>
+                    <div className="field-radiobutton col-6">
+                        <RadioButton
+                            inputId="outro"
+                            name="sexo"
+                            value="outro"
+                            onChange={onCategoryChange}
+                            checked={product.sexo === 'outro'}
+                        />
+                        <label htmlFor="outro">Outro</label>
+                    </div>
+                </div>
+            {submitted && !product.sexo && (
+                <small className="p-invalid">Selecione uma opção de sexo.</small>
+            )}
+            </div>
+
                     </Dialog>
 
                     <Dialog visible={deleteProductDialog} style={{ width: '450px' }} header="Confirm" modal footer={deleteProductDialogFooter} onHide={hideDeleteProductDialog}>
@@ -406,7 +469,7 @@ const CrudPets = () => {
                             <i className="pi pi-exclamation-triangle mr-3" style={{ fontSize: '2rem' }} />
                             {product && (
                                 <span>
-                                    Are you sure you want to delete <b>{product.name}</b>?
+                                    Tem certeza que deseja excluir <b>{product.name}</b>?
                                 </span>
                             )}
                         </div>
